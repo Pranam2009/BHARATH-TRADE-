@@ -1,0 +1,41 @@
+{
+  "name": "BHARATAH TRADE",
+  "short_name": "BHARATAH",
+  "description": "Secure Business Intelligence & Profile Management",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Profile",
+      "short_name": "Add",
+      "description": "Create a new intelligence profile",
+      "url": "/profiles/new",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "All Profiles",
+      "short_name": "Profiles",
+      "description": "View all business intelligence profiles",
+      "url": "/profiles",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Document Vault",
+      "short_name": "Vault",
+      "description": "Access confidential documents",
+      "url": "/documents",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "192x192" }]
+    }
+  ]
+}
