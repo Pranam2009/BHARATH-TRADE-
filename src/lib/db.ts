@@ -7,7 +7,7 @@ import { Profile, ProfileDocument, AuditLog, ProfileStatus, DocumentType } from 
 
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
 const DATA_DIR = IS_SERVERLESS
-  ? path.join(os.tmpdir(), 'bharatah_data')
+  ? path.join(os.tmpdir(), 'bharath_data')
   : path.join(process.cwd(), 'data');
 
 function ensureDataDir() {
@@ -123,7 +123,7 @@ function loadStore(): DbStore {
     {
       id: 'admin_prakash_01',
       username: 'prakash',
-      email: 'prakash@bharatah.trade',
+      email: 'prakash@bharath.trade',
       password_hash: hash,
       session_timeout_mins: 60,
       created_at: new Date().toISOString(),

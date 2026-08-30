@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
 const STORAGE_DIR = IS_SERVERLESS
-  ? path.join(os.tmpdir(), 'bharatah_storage')
+  ? path.join(os.tmpdir(), 'bharath_storage')
   : path.join(process.cwd(), 'storage', 'documents');
 
 function ensureStorageDir() {

@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     exportedAt: new Date().toISOString(),
     exporter: session.email,
-    platform: 'BHARATAH TRADE - Secure Business Intelligence',
+    platform: 'BHARATH TRADE - Secure Business Intelligence',
     stats: {
       totalProfiles: profiles.length,
       totalDocuments: documents.length,

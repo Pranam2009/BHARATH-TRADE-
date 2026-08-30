@@ -20,8 +20,8 @@ import { sound } from '@/lib/sound';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [usernameOrEmail, setUsernameOrEmail] = useState('prakash');
-  const [password, setPassword] = useState('690284');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export default function LoginPage() {
               </div>
 
               <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-white flex items-center gap-2">
-                <span>BHARATAH</span>
+                <span>BHARATH</span>
                 <span className="text-gradient-cyan-violet">TRADE</span>
               </h1>
 
@@ -109,7 +109,7 @@ export default function LoginPage() {
             )}
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               {/* Username */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-mono uppercase text-slate-400">
@@ -120,9 +120,10 @@ export default function LoginPage() {
                   <input
                     type="text"
                     required
+                    autoComplete="off"
                     value={usernameOrEmail}
                     onChange={(e) => setUsernameOrEmail(e.target.value)}
-                    placeholder="prakash"
+                    placeholder="Enter username"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-600 focus:border-cyan-400 focus:outline-none transition-all font-sans"
                   />
                 </div>
@@ -138,9 +139,10 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="690284"
+                    placeholder="Enter password"
                     className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-600 focus:border-cyan-400 focus:outline-none transition-all font-mono"
                   />
                   <button
@@ -171,7 +173,7 @@ export default function LoginPage() {
                   </>
                 ) : (
                   <>
-                    <span>LOGIN TO BHARATAH TRADE</span>
+                    <span>LOGIN TO BHARATH TRADE</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
@@ -183,7 +185,7 @@ export default function LoginPage() {
 
       {/* Bottom Footer */}
       <footer className="relative z-10 p-4 text-center text-xs font-mono text-slate-600">
-        BHARATAH TRADE © 2026 • Private Business Intelligence & Profile Management
+        BHARATH TRADE © 2026 • Private Business Intelligence & Profile Management
       </footer>
     </div>
   );

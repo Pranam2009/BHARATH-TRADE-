@@ -7,7 +7,7 @@ export function createAuditLog({
   details,
   profileId,
   profileName,
-  adminEmail = 'admin@bharatah.trade',
+  adminEmail = 'admin@bharath.trade',
   ipAddress = '127.0.0.1',
 }: {
   action: AuditAction;

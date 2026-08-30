@@ -27,7 +27,7 @@ export default function AppShell({ children }: AppShellProps) {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         sound.playAlert();
-        alert('Your BHARATAH TRADE intelligence session has expired due to inactivity. Please log in again.');
+        alert('Your BHARATH TRADE intelligence session has expired due to inactivity. Please log in again.');
         fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
           router.push('/login');
         });

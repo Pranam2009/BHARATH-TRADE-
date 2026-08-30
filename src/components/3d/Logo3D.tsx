@@ -57,7 +57,7 @@ export default function Logo3D({ size = 'md', showText = true, animate = true }:
       {showText && (
         <div className="flex flex-col">
           <div className={`font-black tracking-wider ${currentSize.text} leading-none flex items-center gap-1.5`}>
-            <span className="text-white">BHARATAH</span>
+            <span className="text-white">BHARATH</span>
             <span className="text-cyan-400">TRADE</span>
           </div>
           <span className={`text-slate-400 font-mono tracking-widest uppercase ${currentSize.sub} mt-0.5`}>

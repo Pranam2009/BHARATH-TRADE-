@@ -1,6 +1,6 @@
 {
-  "name": "BHARATAH TRADE",
-  "short_name": "BHARATAH",
+  "name": "BHARATH TRADE",
+  "short_name": "BHARATH",
   "description": "Secure Business Intelligence & Profile Management",
   "start_url": "/dashboard",
   "display": "standalone",
@@ -28,13 +28,6 @@
       "short_name": "Profiles",
       "description": "View all business intelligence profiles",
       "url": "/profiles",
-      "icons": [{ "src": "/icons/icon.svg", "sizes": "192x192" }]
-    },
-    {
-      "name": "Document Vault",
-      "short_name": "Vault",
-      "description": "Access confidential documents",
-      "url": "/documents",
       "icons": [{ "src": "/icons/icon.svg", "sizes": "192x192" }]
     }
   ]

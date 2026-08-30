@@ -35,7 +35,7 @@ export default function PWAInstallPrompt() {
     sound.playClick();
     if (!deferredPrompt) {
       // If native prompt not available, show alert instruction
-      alert('To install BHARATAH TRADE:\n• Chrome/Edge: Click the Install icon in the address bar (top right)\n• Safari (iOS): Tap Share -> Add to Home Screen\n• Android: Tap menu -> Install App');
+      alert('To install BHARATH TRADE:\n• Chrome/Edge: Click the Install icon in the address bar (top right)\n• Safari (iOS): Tap Share -> Add to Home Screen\n• Android: Tap menu -> Install App');
       return;
     }
 
@@ -61,10 +61,10 @@ export default function PWAInstallPrompt() {
       onClick={handleInstallClick}
       onMouseEnter={() => sound.playHover()}
       className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600/20 to-purple-600/20 border border-cyan-400/40 text-cyan-300 hover:text-white hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all duration-200 text-xs font-medium"
-      title="Install BHARATAH TRADE as Desktop/Mobile App"
+      title="Install BHARATH TRADE as Desktop/Mobile App"
     >
       <Download className="w-3.5 h-3.5 text-cyan-400 animate-bounce" />
-      <span className="hidden sm:inline font-mono">Install BHARATAH TRADE</span>
+      <span className="hidden sm:inline font-mono">Install BHARATH TRADE</span>
       <span className="sm:hidden font-mono">Install</span>
     </button>
   );

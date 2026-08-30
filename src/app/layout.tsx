@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BHARATAH TRADE | Secure Business Intelligence & Profile Management",
+  title: "BHARATH TRADE | Secure Business Intelligence & Profile Management",
   description: "Private administrator-controlled business database platform used to store, manage, search, update, and organize detailed intelligence profiles and confidential documents.",
   manifest: "/manifest.json",
   icons: {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "BHARATAH TRADE",
+    title: "BHARATH TRADE",
   },
 };
 

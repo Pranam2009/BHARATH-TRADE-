@@ -37,7 +37,6 @@ export default function Sidebar({
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'All Profiles', href: '/profiles', icon: Users },
     { label: 'Add Profile', href: '/profiles/new', icon: UserPlus },
-    { label: 'Document Vault', href: '/documents', icon: FileText },
     { label: 'Security Audit', href: '/audit', icon: ShieldAlert },
     { label: 'System Settings', href: '/settings', icon: Settings },
   ];

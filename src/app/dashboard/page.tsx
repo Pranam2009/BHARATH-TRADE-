@@ -81,7 +81,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <h1 className="text-2xl lg:text-4xl font-extrabold text-white">
-                BHARATAH TRADE <span className="text-gradient-cyan-violet">DASHBOARD</span>
+                BHARATH TRADE <span className="text-gradient-cyan-violet">DASHBOARD</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
                 Store, manage, update, and inspect confidential profiles and documents with zero mandatory field friction.
@@ -107,15 +107,6 @@ export default function DashboardPage() {
               >
                 <Users className="w-4 h-4 text-cyan-400" />
                 <span>View All Profiles</span>
-              </Link>
-
-              <Link
-                href="/documents"
-                onClick={() => sound.playClick()}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-purple-500/50 text-slate-200 text-xs font-mono transition-all"
-              >
-                <FileText className="w-4 h-4 text-purple-400" />
-                <span>Manage Documents</span>
               </Link>
             </div>
           </div>

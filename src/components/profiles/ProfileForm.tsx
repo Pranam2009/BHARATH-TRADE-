@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   Trash2,
 } from 'lucide-react';
-import { Profile, ProfileStatus } from '@/types';
+import { Profile, ProfileStatus, DocumentType } from '@/types';
 import { calculateProfileCompleteness } from '@/lib/formatters';
 import { sound } from '@/lib/sound';
 import DocumentUploader from './DocumentUploader';
@@ -26,6 +26,44 @@ interface ProfileFormProps {
   initialData?: Profile;
   isEditing?: boolean;
 }
+
+const NEW_DOC_CONFIGS: {
+  type: DocumentType;
+  title: string;
+  description: string;
+  accept: string;
+}[] = [
+  {
+    type: 'passport_photo',
+    title: 'Passport Size Photo',
+    description: 'Recent portrait photo (JPG/PNG)',
+    accept: 'image/jpeg,image/png,image/webp',
+  },
+  {
+    type: 'aadhaar_front',
+    title: 'Aadhaar Card (Front)',
+    description: 'Front side with photo & Aadhaar number',
+    accept: 'image/jpeg,image/png,image/webp,application/pdf',
+  },
+  {
+    type: 'aadhaar_back',
+    title: 'Aadhaar Card (Back)',
+    description: 'Back side with residential address',
+    accept: 'image/jpeg,image/png,image/webp,application/pdf',
+  },
+  {
+    type: 'pan_card',
+    title: 'PAN Card Photo',
+    description: 'Clear image of PAN card',
+    accept: 'image/jpeg,image/png,image/webp,application/pdf',
+  },
+  {
+    type: 'signature',
+    title: 'Signature Photo',
+    description: 'Specimen signature on white background',
+    accept: 'image/jpeg,image/png,image/webp',
+  },
+];
 
 export default function ProfileForm({ initialData, isEditing = false }: ProfileFormProps) {
   const router = useRouter();
@@ -57,6 +95,7 @@ export default function ProfileForm({ initialData, isEditing = false }: ProfileF
   });
 
   const [documents, setDocuments] = useState(initialData?.documents || []);
+  const [stagedFiles, setStagedFiles] = useState<{ [key in DocumentType]?: File }>({});
   const [activeSection, setActiveSection] = useState<'personal' | 'contact' | 'bank' | 'dmat' | 'kyc' | 'docs'>('personal');
   const [saving, setSaving] = useState(false);
   const [statusOverridden, setStatusOverridden] = useState(Boolean(initialData?.status));
@@ -80,6 +119,19 @@ export default function ProfileForm({ initialData, isEditing = false }: ProfileF
   const handleClearField = (field: keyof Profile) => {
     sound.playClick();
     setFormData(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const handleFileSelect = (type: DocumentType, file: File | null) => {
+    sound.playClick();
+    if (!file) {
+      setStagedFiles(prev => {
+        const copy = { ...prev };
+        delete copy[type];
+        return copy;
+      });
+    } else {
+      setStagedFiles(prev => ({ ...prev, [type]: file }));
+    }
   };
 
   const handleSave = async (forcedStatus?: ProfileStatus) => {
@@ -114,17 +166,35 @@ export default function ProfileForm({ initialData, isEditing = false }: ProfileF
         throw new Error(data.error || 'Failed to save profile');
       }
 
+      const targetProfileId = data.profile.profileId;
+
+      // If we are creating a new profile and have staged files to upload, upload them now
+      if (!isEditing && Object.keys(stagedFiles).length > 0) {
+        for (const [docType, file] of Object.entries(stagedFiles)) {
+          if (file) {
+            const formDataUpload = new FormData();
+            formDataUpload.append('profileId', targetProfileId);
+            formDataUpload.append('docType', docType);
+            formDataUpload.append('file', file);
+            await fetch('/api/documents', {
+              method: 'POST',
+              body: formDataUpload,
+            });
+          }
+        }
+      }
+
       sound.playSuccess();
       setSuccessMessage(
         isEditing
-          ? `Profile ${data.profile.profileId} updated successfully.`
-          : `New Profile ${data.profile.profileId} saved successfully!`
+          ? `Profile ${targetProfileId} updated successfully.`
+          : `New Profile ${targetProfileId} saved with attached documents!`
       );
 
       // Brief delay then navigate to view page
       setTimeout(() => {
-        router.push(`/profiles/${data.profile.profileId}`);
-      }, 1200);
+        router.push(`/profiles/${targetProfileId}`);
+      }, 1000);
     } catch (err: unknown) {
       sound.playAlert();
       setErrorMessage((err as Error).message || 'Failed to save profile');
@@ -830,24 +900,66 @@ export default function ProfileForm({ initialData, isEditing = false }: ProfileF
                 onDocumentsChange={reloadDocuments}
               />
             ) : (
-              <div className="p-8 rounded-2xl bg-slate-950/80 border border-cyan-500/20 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400">
-                  <Sparkles className="w-6 h-6 animate-pulse" />
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/20 text-xs text-cyan-300 font-mono">
+                  Select and attach documents for this profile directly. All uploads are optional and will be saved to this person's secure profile.
                 </div>
-                <h4 className="text-base font-bold text-white">
-                  Document Vault Initializing
-                </h4>
-                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                  You can save this profile immediately (even with partial or empty information). You can upload Aadhaar, PAN, Passport photos, and signatures during initial creation or return anytime later!
-                </p>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSave()}
-                    className="px-6 py-2.5 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 hover:bg-cyan-500/30 text-xs font-mono"
-                  >
-                    Save & Enable Document Uploads →
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {NEW_DOC_CONFIGS.map(cfg => {
+                    const selectedFile = stagedFiles[cfg.type];
+                    return (
+                      <div
+                        key={cfg.type}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          selectedFile
+                            ? 'bg-cyan-950/50 border-cyan-400/50 shadow-[0_0_15px_rgba(0,240,255,0.15)]'
+                            : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="text-xs font-bold text-white font-mono uppercase">
+                            {cfg.title}
+                          </h4>
+                          {selectedFile && (
+                            <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                              ATTACHED
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mb-3">
+                          {cfg.description}
+                        </p>
+
+                        {selectedFile ? (
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                            <span className="text-[11px] text-cyan-300 font-mono truncate max-w-[150px]">
+                              {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleFileSelect(cfg.type, null)}
+                              className="text-[10px] text-rose-400 hover:text-rose-300 font-mono"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-850 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-300 border border-dashed border-slate-700 text-xs font-mono flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                            <span>+ Choose File</span>
+                            <input
+                              type="file"
+                              accept={cfg.accept}
+                              className="hidden"
+                              onChange={e => {
+                                const f = e.target.files?.[0] || null;
+                                handleFileSelect(cfg.type, f);
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
