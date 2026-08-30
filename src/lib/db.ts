@@ -4,6 +4,7 @@ import os from 'os';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { Profile, ProfileDocument, AuditLog, ProfileStatus, DocumentType } from '@/types';
+import { getSupabaseClient } from './supabase';
 
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
 const DATA_DIR = IS_SERVERLESS
@@ -81,10 +82,11 @@ interface DbStore {
   }[];
 }
 
-// In-memory persistent cache for high performance
 declare global {
   // eslint-disable-next-line no-var
   var __bt_store: DbStore | undefined;
+  // eslint-disable-next-line no-var
+  var __bt_supabase_synced: boolean | undefined;
 }
 
 const DB_FILE = path.join(DATA_DIR, 'store.json');
@@ -138,7 +140,40 @@ function loadStore(): DbStore {
   global.__bt_store = initialStore;
   saveStore(initialStore);
 
+  // Background sync from Supabase if configured
+  syncFromSupabaseBackground();
+
   return initialStore;
+}
+
+async function syncFromSupabaseBackground() {
+  if (global.__bt_supabase_synced) return;
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    const { data: remoteProfiles } = await supabase.from('profiles').select('*');
+    if (remoteProfiles && remoteProfiles.length > 0 && global.__bt_store) {
+      global.__bt_store.profiles = remoteProfiles;
+      saveStore(global.__bt_store);
+    }
+
+    const { data: remoteDocs } = await supabase.from('documents').select('*');
+    if (remoteDocs && remoteDocs.length > 0 && global.__bt_store) {
+      global.__bt_store.documents = remoteDocs;
+      saveStore(global.__bt_store);
+    }
+
+    const { data: remoteAudits } = await supabase.from('audit_logs').select('*');
+    if (remoteAudits && remoteAudits.length > 0 && global.__bt_store) {
+      global.__bt_store.audit_logs = remoteAudits;
+      saveStore(global.__bt_store);
+    }
+
+    global.__bt_supabase_synced = true;
+  } catch (err) {
+    console.warn('Supabase remote sync error:', err);
+  }
 }
 
 function saveStore(store: DbStore) {
@@ -148,6 +183,26 @@ function saveStore(store: DbStore) {
     fs.writeFileSync(DB_FILE, JSON.stringify(store, null, 2), 'utf-8');
   } catch (err) {
     console.warn('Failed to persist store to disk (in-memory active):', err);
+  }
+}
+
+// Push item to Supabase asynchronously
+function pushToSupabase(table: string, payload: Record<string, unknown>, operation: 'upsert' | 'delete' = 'upsert', idField = 'id', idVal?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    if (operation === 'upsert') {
+      supabase.from(table).upsert(payload).then(({ error }) => {
+        if (error) console.warn(`Supabase upsert into ${table} warning:`, error.message);
+      });
+    } else if (operation === 'delete' && idVal) {
+      supabase.from(table).delete().eq(idField, idVal).then(({ error }) => {
+        if (error) console.warn(`Supabase delete from ${table} warning:`, error.message);
+      });
+    }
+  } catch (err) {
+    console.warn(`Supabase ${operation} warning:`, err);
   }
 }
 
@@ -395,7 +450,7 @@ export const db = {
             dmat_account_number, pan_number, kyc_completion_date, created_at, updated_at
           ] = params as (string | null)[];
 
-          store.profiles.push({
+          const newProfile = {
             id: String(id),
             profile_id: String(profile_id),
             status: String(status || 'Draft'),
@@ -422,9 +477,14 @@ export const db = {
             kyc_completion_date,
             created_at: String(created_at),
             updated_at: String(updated_at),
-          });
+          };
 
+          store.profiles.push(newProfile);
           saveStore(store);
+
+          // Real-time Supabase sync
+          pushToSupabase('profiles', newProfile);
+
           return { changes: 1 };
         }
 
@@ -437,6 +497,7 @@ export const db = {
             if (p) {
               p.updated_at = updatedAt;
               saveStore(store);
+              pushToSupabase('profiles', p);
             }
             return { changes: 1 };
           }
@@ -450,7 +511,7 @@ export const db = {
 
           const pIndex = store.profiles.findIndex(prof => prof.id === String(id));
           if (pIndex !== -1) {
-            store.profiles[pIndex] = {
+            const updatedProfile = {
               ...store.profiles[pIndex],
               status: String(status || store.profiles[pIndex].status),
               full_name,
@@ -476,7 +537,9 @@ export const db = {
               kyc_completion_date,
               updated_at: String(updated_at),
             };
+            store.profiles[pIndex] = updatedProfile;
             saveStore(store);
+            pushToSupabase('profiles', updatedProfile);
           }
           return { changes: 1 };
         }
@@ -486,13 +549,15 @@ export const db = {
           const id = String(params[0]);
           store.profiles = store.profiles.filter(p => p.id !== id && p.profile_id !== id);
           saveStore(store);
+          pushToSupabase('profiles', {}, 'delete', 'profile_id', id);
+          pushToSupabase('profiles', {}, 'delete', 'id', id);
           return { changes: 1 };
         }
 
         // 5. INSERT INTO documents
         if (cleanSql.startsWith('INSERT INTO DOCUMENTS')) {
           const [id, profile_id, doc_type, file_name, original_name, mime_type, size_bytes, created_at, updated_at] = params as (string | number)[];
-          store.documents.push({
+          const newDoc = {
             id: String(id),
             profile_id: String(profile_id),
             doc_type: String(doc_type),
@@ -502,8 +567,10 @@ export const db = {
             size_bytes: Number(size_bytes),
             created_at: String(created_at),
             updated_at: String(updated_at),
-          });
+          };
+          store.documents.push(newDoc);
           saveStore(store);
+          pushToSupabase('documents', newDoc);
           return { changes: 1 };
         }
 
@@ -512,13 +579,14 @@ export const db = {
           const id = String(params[0]);
           store.documents = store.documents.filter(d => d.id !== id && d.profile_id !== id);
           saveStore(store);
+          pushToSupabase('documents', {}, 'delete', 'id', id);
           return { changes: 1 };
         }
 
         // 7. INSERT INTO audit_logs
         if (cleanSql.startsWith('INSERT INTO AUDIT_LOGS')) {
           const [id, action, details, profile_id, profile_name, admin_email, ip_address, timestamp] = params as (string | null)[];
-          store.audit_logs.unshift({
+          const newLog = {
             id: String(id || uuidv4()),
             action: String(action),
             details: String(details),
@@ -527,8 +595,10 @@ export const db = {
             admin_email: String(admin_email),
             ip_address: String(ip_address || '127.0.0.1'),
             timestamp: String(timestamp || new Date().toISOString()),
-          });
+          };
+          store.audit_logs.unshift(newLog);
           saveStore(store);
+          pushToSupabase('audit_logs', newLog);
           return { changes: 1 };
         }
 
@@ -585,7 +655,7 @@ export function mapRowToProfile(row: Record<string, unknown>, docs: ProfileDocum
     dmatAgency: row.dmat_agency ? String(row.dmat_agency) : undefined,
     dmatAccountNumber: row.dmat_account_number ? String(row.dmat_account_number) : undefined,
     panNumber: row.pan_number ? String(row.pan_number) : undefined,
-    kycCompletionDate: row.kycCompletionDate ? String(row.kyc_completion_date) : undefined,
+    kycCompletionDate: row.kyc_completion_date ? String(row.kyc_completion_date) : undefined,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
     documents: docs,
