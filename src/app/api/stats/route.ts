@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
   });
 
   // Recent 8 audit logs
-  const recentAudits = db.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 8').all() as AuditLog[];
+  const recentAudits = (db.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 8').all() as unknown) as AuditLog[];
+
 
   return NextResponse.json({
     stats: {

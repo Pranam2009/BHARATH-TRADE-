@@ -1,13 +1,24 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_DIR = path.join(process.cwd(), 'storage', 'documents');
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
+const STORAGE_DIR = IS_SERVERLESS
+  ? path.join(os.tmpdir(), 'bharatah_storage')
+  : path.join(process.cwd(), 'storage', 'documents');
 
-// Ensure secure storage directory exists
-if (!fs.existsSync(STORAGE_DIR)) {
-  fs.mkdirSync(STORAGE_DIR, { recursive: true });
+function ensureStorageDir() {
+  try {
+    if (!fs.existsSync(STORAGE_DIR)) {
+      fs.mkdirSync(STORAGE_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('Could not create storage directory:', err);
+  }
 }
+
+ensureStorageDir();
 
 export const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -20,11 +31,9 @@ export const ALLOWED_MIME_TYPES = [
 export async function saveSecureDocument(
   fileBuffer: Buffer,
   originalName: string,
-  mimeType: string
+  _mimeType: string
 ): Promise<{ fileName: string; sizeBytes: number }> {
-  if (!fs.existsSync(STORAGE_DIR)) {
-    fs.mkdirSync(STORAGE_DIR, { recursive: true });
-  }
+  ensureStorageDir();
 
   const ext = path.extname(originalName) || '.bin';
   const cleanExt = ext.replace(/[^a-zA-Z0-9.]/g, '').slice(0, 8);
@@ -41,7 +50,7 @@ export async function saveSecureDocument(
 }
 
 export function getSecureDocumentPath(fileName: string): string | null {
-  // Prevent path traversal
+  ensureStorageDir();
   const safeName = path.basename(fileName);
   const filePath = path.join(STORAGE_DIR, safeName);
   if (fs.existsSync(filePath)) {
@@ -52,6 +61,7 @@ export function getSecureDocumentPath(fileName: string): string | null {
 
 export async function deleteSecureDocument(fileName: string): Promise<boolean> {
   try {
+    ensureStorageDir();
     const safeName = path.basename(fileName);
     const filePath = path.join(STORAGE_DIR, safeName);
     if (fs.existsSync(filePath)) {
